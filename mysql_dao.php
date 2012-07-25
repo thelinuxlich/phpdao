@@ -5,9 +5,9 @@ include("forceUTF8/Encoding.php");
 include("firephp/fb.php");
 
 class DAO {
-    protected $cStmt;
+    protected $stmt;
     public $retValue,$query;
-    public $cConexao = null;
+    public $conexao = null;
     public $firebug = false;	
     private $db = "your_db";
     private $user = "your_user";
@@ -21,11 +21,11 @@ class DAO {
 
     public function inicializar_conexao() {
         try {
-            $this->cConexao = new PDO($db, $user, $pass);
+            $this->conexao = new PDO($db, $user, $pass);
         } catch(PDOException $e) {
             echo $e->getMessage();
         }
-        $this->cConexao->beginTransaction();
+        $this->conexao->beginTransaction();
     }
 
     public function executar($query,$commit=false) {
@@ -86,7 +86,7 @@ class DAO {
         } else {
             $this->executar_query_com_bindings($this->query,$bindings);
         }
-        return($this->cStmt->fetch());
+        return($this->stmt->fetch());
     }
 
     public function buscar_varios($query,$bindings = null) {
@@ -96,7 +96,7 @@ class DAO {
         } else {
             $this->executar_query_com_bindings($this->query,$bindings);
         }
-        return($this->cStmt->fetchAll());
+        return($this->stmt->fetchAll());
     }
 
     public function converter_para_utf8($data) {
@@ -297,15 +297,15 @@ class DAO {
     }
 
     public function __destruct() {
-        if($this->cConexao != null) {
-            $this->cConexao->commit();
-            $this->cConexao = null;
+        if($this->conexao != null) {
+            $this->conexao->commit();
+            $this->conexao = null;
         }
     }
 
     public function executar_query($query) {
-        $this->cStmt = $this->cConexao->prepare($query);
-        return $this->verifica_transacao($this->cStmt->execute());
+        $this->stmt = $this->conexao->prepare($query);
+        return $this->verifica_transacao($this->stmt->execute());
     }
 
     private function check_param_type($v) {
@@ -323,22 +323,22 @@ class DAO {
     }
 
     public function executar_query_com_bindings($query,$valores,$returning=null) {
-        $this->cStmt = $this->cConexao->prepare($query);
+        $this->stmt = $this->conexao->prepare($query);
         if($this->is_assoc($valores)) {
             foreach($valores as $k => $v) {
                 $param = $this->check_param_type($v);
-                $this->cStmt->bindValue($k,$v,$param);
+                $this->stmt->bindValue($k,$v,$param);
             }
         } else {
             for($i = 0; $i < count($valores); $i++) {
                 $param = $this->check_param_type($valores[$i]);
-                $this->cStmt->bindValue(":FIELD_".$i,$valores[$i],$param);
+                $this->stmt->bindValue(":FIELD_".$i,$valores[$i],$param);
             }
         }
         if($returning != null) {
-            $this->retValue = $this->cConexao->lastInsertId();
+            $this->retValue = $this->conexao->lastInsertId();
         }
-        return $this->verifica_transacao($this->cStmt->execute());
+        return $this->verifica_transacao($this->stmt->execute());
     }
 
     private function verifica_transacao($status) {
@@ -346,12 +346,12 @@ class DAO {
             return($status);
         } else {
             if($this->firebug == false) {
-                error_log($this->cConexao->errorInfo());
+                error_log($this->conexao->errorInfo());
             } else {
                 FB::log("Erro na query: ".$this->query);
-                FB::log($this->cConexao->errorInfo());
+                FB::log($this->conexao->errorInfo());
             }	
-            $this->cConexao->rollback();
+            $this->conexao->rollback();
             return false;
         }
     }

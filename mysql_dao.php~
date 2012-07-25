@@ -199,7 +199,7 @@ class DAO {
         }
     }
 
-    public function horarioEmIntervalo($h,$m,$h1,$m1,$h2,$m2){
+    public function horario_em_intervalo($h,$m,$h1,$m1,$h2,$m2){
         $h = intval($h);
         $m = intval($m);
         $h1 = intval($h1);
